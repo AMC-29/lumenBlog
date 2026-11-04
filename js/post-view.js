@@ -1,6 +1,3 @@
-// ==========================================================
-// Lumen — single post view behaviors
-// ==========================================================
 document.addEventListener('DOMContentLoaded', () => {
     initDeleteModal();
     initReadingProgress();

@@ -1,6 +1,3 @@
-// ==========================================================
-// Lumen — global behaviors used on every page
-// ==========================================================
 document.addEventListener('DOMContentLoaded', () => {
     initNavToggle();
     initToasts();

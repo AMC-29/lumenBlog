@@ -1,10 +1,3 @@
-/* ==========================================================
-   Lumen — Design tokens
-   Palette reads as a sunrise: warm orange dawn -> cool teal day.
-   The gradient bar built from these five colors is the app's
-   signature motif (nav underline, card hover edge, reading
-   progress, dividers).
-   ========================================================== */
 :root {
     --c-orange:        #ff9f1c;
     --c-orange-light:  #ffbf69;

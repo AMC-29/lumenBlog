@@ -1,6 +1,3 @@
-// ==========================================================
-// Lumen — editor page behaviors
-// ==========================================================
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initLivePreview();
