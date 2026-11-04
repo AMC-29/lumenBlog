@@ -109,3 +109,6 @@ one, so anything that works on `localhost` will work once uploaded.
 - Add a "my posts" page filtered by `user_id = current_user_id()`.
 - Swap the hand-written Markdown parser for a library like Parsedown if
   you want full CommonMark support (tables, footnotes, etc.).
+
+# Lumen-Blog
+A php based blogging application
