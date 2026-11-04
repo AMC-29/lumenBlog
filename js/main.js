@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initToasts();
     initScrollReveal();
     clearSavedEditorDraft();
+    initLogoutConfirm();
 });
 
 function clearSavedEditorDraft() {
@@ -10,6 +11,31 @@ function clearSavedEditorDraft() {
     try {
         localStorage.removeItem('lumen-draft-' + window.__clearEditorDraft);
     } catch (e) { /* localStorage unavailable — nothing to clear */ }
+}
+
+/* ---------- Logout confirmation modal ---------- */
+function initLogoutConfirm() {
+    const link = document.getElementById('logoutLink');
+    const modal = document.getElementById('logoutModal');
+    const cancelBtn = document.getElementById('logoutCancel');
+    if (!link || !modal || !cancelBtn) return;
+
+    const open = (e) => {
+        e.preventDefault();
+        modal.hidden = false;
+        cancelBtn.focus();
+    };
+    const close = () => {
+        modal.hidden = true;
+        link.focus();
+    };
+
+    link.addEventListener('click', open);
+    cancelBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.hidden) close();
+    });
 }
 
 /* ---------- Mobile nav toggle ---------- */

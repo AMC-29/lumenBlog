@@ -72,9 +72,9 @@ button { font-family: inherit; cursor: pointer; }
     position: sticky;
     top: 4px;
     z-index: 50;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--c-border);
+    background: transparent; /*rgba(255, 255, 255, 0.85)*/
+    /*backdrop-filter: blur(10px);*/
+    /*border-bottom: 1px solid var(--c-border);*/
 }
 .header-inner {
     max-width: 1080px;
@@ -85,14 +85,9 @@ button { font-family: inherit; cursor: pointer; }
     justify-content: space-between;
     gap: 16px;
 }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-mark {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--gradient-horizon);
-    display: inline-block;
-    box-shadow: var(--shadow-sm);
-}
-.brand-mark.large { width: 56px; height: 56px; margin-bottom: 20px; }
+.brand { display: flex; align-items: center; gap: 5px; }
+.brand-logo { height: 34px; width: auto; display: block; border-radius: 0; }  /* border-radius: 0 undoes the global img rounding */
+.brand-logo.large { height: 92px; margin-bottom: 20px; margin-left: 100px; }
 .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; color: var(--c-ink); letter-spacing: -0.02em; }
 
 .site-nav { display: flex; align-items: center; gap: 22px; }
@@ -147,6 +142,121 @@ button { font-family: inherit; cursor: pointer; }
     font-weight: 600; transition: background 0.2s;
 }
 .search-bar button:hover { background: var(--c-teal); }
+
+/* ---------- Home page background image ---------- */
+/* ==========================================================
+   Page background images — each page has its OWN rule, so
+   changing opacity on one page never affects another.
+   ========================================================== */
+
+/* Shared layout only (no image, no opacity — on purpose) */
+body.home-page::before,
+body.login-page::before,
+body.signup-page::before,
+body.editor-page::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+/* Per-page image + opacity. Filenames must match /images exactly. */
+body.home-page::before   { background-image: url('../images/bgg.jpg');   opacity: 0.85; }
+body.login-page::before  { background-image: url('../images/bg3.jpg');  opacity: 0.45; }
+body.signup-page::before { background-image: url('../images/bg1.jpg'); opacity: 0.45; }
+body.editor-page::before { background-image: url('../images/bg2.jpg'); opacity: 0.30; }
+/* Login/signup: frosted white form side so the form stays readable */
+body.login-page .auth-form-side,
+body.signup-page .auth-form-side {
+    background: rgba(203, 243, 240, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+/* Editor: image shows around and faintly through the writing panes */
+body.editor-page .pane {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+}
+body.editor-page .pane textarea { background: transparent; }
+body.editor-page .pane textarea:focus { background: rgba(247, 253, 252, 0.9); }
+body.editor-page .title-input {
+    background: rgba(255, 255, 255, 0.85);
+    padding: 12px 14px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+/* ---------- Logout: turns slightly red on hover ---------- */
+.site-nav a.nav-logout:hover,
+.site-nav a.nav-logout:focus-visible {
+    color: #d9534f !important;   /* !important needed: .nav-link-muted uses it too */
+}
+a.btn-danger-solid:hover { color: #fff; }   /* stops global a:hover turning the text orange */
+
+/* ---------- Home page marquee ---------- */
+.marquee {
+    overflow: hidden;
+    padding: 16px 0 48px;        /* room for hover lift + card shadow */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+            mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+.marquee-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+    animation: marquee-scroll var(--marquee-duration, 60s) linear infinite;
+}
+/* Stop while hovering, pressing (touch) or keyboard-focusing a card */
+.marquee:hover .marquee-track,
+.marquee:active .marquee-track,
+.marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+}
+.marquee-group {
+    display: flex;
+    gap: 24px;
+    padding-right: 24px;         /* keeps the gap identical at the loop seam */
+}
+.marquee .post-card {
+    flex: 0 0 320px;
+    opacity: 1;                  /* cancel the reveal-on-scroll start state */
+    transform: none;
+}
+.marquee .post-card:hover { transform: translateY(-6px); }
+
+@keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }   /* right → left, one full group */
+}
+
+@media (max-width: 480px) {
+    .marquee .post-card { flex-basis: 270px; }
+}
+
+/* Reduced-motion users: no auto-scroll, swipe/scroll manually instead */
+@media (prefers-reduced-motion: reduce) {
+    .marquee { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+    .marquee-track { animation: none !important; }
+    .marquee-group[aria-hidden="true"] { display: none; }
+}
+
+/* Fades the image out toward the bottom so the post grid stays clean */
+body.home-page::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 100%);
+    pointer-events: none;
+}
+
+/* Soft white glow behind the headline for readability */
+body.home-page .masthead {
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 70%);
+}
 
 /* ---------- Post grid & cards ---------- */
 .post-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; margin-top: 12px; }

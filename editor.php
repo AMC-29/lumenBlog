@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = ($post ? 'Edit post' : 'New post') . ' — Lumen';
+$bodyClass = 'editor-page';
 require __DIR__ . '/includes/header.php';
 ?>
 

@@ -13,6 +13,7 @@ $bodyClass = $bodyClass ?? '';
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css?v=<?= filemtime(__DIR__ . '/../css/style.css') ?>">
+<link rel="icon" type="image/png" href="images/logo-Photoroom.png">
 </head>
 <body class="<?= e($bodyClass) ?>">
 
@@ -21,7 +22,7 @@ $bodyClass = $bodyClass ?? '';
 <header class="site-header">
     <div class="header-inner">
         <a href="index.php" class="brand">
-            <span class="brand-mark"></span>
+            <?= brand_logo() ?>
             <span class="brand-name">Lumen</span>
         </a>
 
@@ -37,7 +38,7 @@ $bodyClass = $bodyClass ?? '';
                     <span class="avatar-badge"><?= e(initials(current_username())) ?></span>
                     <?= e(current_username()) ?>
                 </span>
-                <a href="logout.php" class="nav-link-muted">Log out</a>
+                <a href="logout.php" class="nav-link-muted nav-logout" id="logoutLink">Log out</a>
             <?php else: ?>
                 <a href="login.php">Log in</a>
                 <a href="register.php" class="nav-cta">Sign up</a>

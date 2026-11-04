@@ -5,6 +5,12 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/** Render the shared Lumen brand logo. */
+function brand_logo(string $class = 'brand-logo'): string
+{
+    return '<img class="' . e($class) . '" src="images/logo-Photoroom.png" alt="Lumen logo">';
+}
+
 /** Turn a title into a URL-friendly, unique slug. */
 function make_slug(PDO $pdo, string $title, int $ignoreId = 0): string
 {

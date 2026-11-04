@@ -59,14 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Sign up — Lumen';
-$bodyClass = 'auth-page';
+$bodyClass = 'auth-page signup-page';
 require __DIR__ . '/includes/header.php';
 ?>
 
 <section class="auth-wrap">
     <div class="auth-panel" aria-hidden="true">
         <div class="auth-panel-content">
-            <span class="brand-mark large"></span>
+            <?= brand_logo('brand-logo large') ?>
             <h2>Where ideas dawn.</h2>
             <p>Join Lumen to write, edit, and share your own stories — all under your own name.</p>
         </div>

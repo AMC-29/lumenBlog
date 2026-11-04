@@ -39,14 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Log in — Lumen';
-$bodyClass = 'auth-page';
+$bodyClass = 'auth-page login-page';
 require __DIR__ . '/includes/header.php';
 ?>
 
 <section class="auth-wrap">
     <div class="auth-panel" aria-hidden="true">
         <div class="auth-panel-content">
-            <span class="brand-mark large"></span>
+            <?= brand_logo('brand-logo large') ?>
             <h2>Good to see you again.</h2>
             <p>Pick up right where you left off — your drafts and posts are waiting.</p>
         </div>
