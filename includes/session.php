@@ -35,7 +35,7 @@ function require_login(): void
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'
             && basename($requestPath ?: '') === 'editor.php') {
             $_SESSION['pending_editor_draft'] = [
-                'post_id' => isset($_GET['id']) ? (int) $_GET['id'] : 0,
+                'post_id' => is_string($_GET['id'] ?? null) && ctype_digit($_GET['id']) ? (int) $_GET['id'] : 0,
                 'title' => is_string($_POST['title'] ?? null) ? $_POST['title'] : '',
                 'content' => is_string($_POST['content'] ?? null) ? $_POST['content'] : '',
             ];
@@ -70,7 +70,7 @@ function csrf_token(): string
 }
 
 /** Validate a submitted CSRF token. */
-function csrf_valid(?string $token): bool
+function csrf_valid($token): bool
 {
-    return $token !== null && !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    return is_string($token) && !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }

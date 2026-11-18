@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS user (
     email      VARCHAR(150) NOT NULL UNIQUE,
     password   VARCHAR(255) NOT NULL,          -- bcrypt hash, never plain text
     role       ENUM('author', 'admin') NOT NULL DEFAULT 'author',
+    bio        VARCHAR(500) NOT NULL DEFAULT '',
+    avatar     VARCHAR(37) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -24,6 +26,9 @@ CREATE TABLE IF NOT EXISTS blogPost (
     title      VARCHAR(200) NOT NULL,
     slug       VARCHAR(220) NOT NULL UNIQUE,
     content    MEDIUMTEXT   NOT NULL,          -- raw Markdown
+    status     ENUM('draft', 'published') NOT NULL DEFAULT 'published',
+    published_at DATETIME NULL,
+    cover_image VARCHAR(37) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_blogpost_user
@@ -33,6 +38,28 @@ CREATE TABLE IF NOT EXISTS blogPost (
 
 CREATE INDEX idx_blogpost_created ON blogPost (created_at DESC);
 CREATE INDEX idx_blogpost_user ON blogPost (user_id);
+CREATE INDEX idx_blogpost_status_published ON blogPost (status, published_at);
+
+CREATE TABLE IF NOT EXISTS tag (
+    id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(30) NOT NULL,
+    slug VARCHAR(120) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS post_tag (
+    post_id INT UNSIGNED NOT NULL,
+    tag_id  INT UNSIGNED NOT NULL,
+    PRIMARY KEY (post_id, tag_id),
+    CONSTRAINT fk_post_tag_post FOREIGN KEY (post_id) REFERENCES blogPost(id) ON DELETE CASCADE,
+    CONSTRAINT fk_post_tag_tag FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS slug_history (
+    post_id INT UNSIGNED NOT NULL,
+    slug    VARCHAR(220) NOT NULL UNIQUE,
+    PRIMARY KEY (post_id, slug),
+    CONSTRAINT fk_slug_history_post FOREIGN KEY (post_id) REFERENCES blogPost(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- No seed users are inserted here on purpose: passwords must go through
 -- PHP's password_hash() so they're salted correctly. Create your first

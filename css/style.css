@@ -168,7 +168,7 @@ body.editor-page::before {
 body.home-page::before   { background-image: url('../images/bgg.jpg');   opacity: 0.85; }
 body.login-page::before  { background-image: url('../images/bg3.jpg');  opacity: 0.45; }
 body.signup-page::before { background-image: url('../images/bg1.jpg'); opacity: 0.45; }
-body.editor-page::before { background-image: url('../images/bg2.jpg'); opacity: 0.30; }
+body.editor-page::before { background-image: url('../images/bg2.jpg'); opacity: 0.65; }
 /* Login/signup: frosted white form side so the form stays readable */
 body.login-page .auth-form-side,
 body.signup-page .auth-form-side {
@@ -453,4 +453,52 @@ body.home-page .masthead {
     .page { padding: 28px 16px 60px; }
     .masthead { padding: 28px 0 28px; }
     .post-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Pagination, tags, profiles, and images ---------- */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 32px 0 12px; }
+.pagination a, .pagination .current { min-width: 38px; padding: 8px 12px; text-align: center; border-radius: 999px; }
+.pagination a { border: 1px solid var(--c-border); color: var(--c-ink); }
+.pagination a:hover, .pagination .current { background: var(--c-ink); border-color: var(--c-ink); color: white; }
+.pagination-ellipsis { color: var(--c-ink-soft); padding: 0 3px; }
+.popular-tags, .card-tags, .post-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.home-popular-tags { justify-content: center; margin: -12px 0 28px; }
+.tag-chip { display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 999px; background: var(--c-teal-light); color: #0f5f57; font-size: 0.78rem; font-weight: 600; }
+.tag-chip:hover { background: var(--c-orange-light); color: var(--c-ink); }
+.tag-chip-button { border: 0; cursor: pointer; }
+.card-tags { padding: 0 22px 10px; }
+.post-card-cover { width: 100%; max-height: 220px; object-fit: cover; border-radius: 0; }
+.post-card-author { color: inherit; font-weight: 600; }
+.post-card-author:hover { color: var(--c-orange); }
+.avatar-image { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.avatar-image.small { width: 22px; height: 22px; }
+.profile-head { display: flex; align-items: center; gap: 22px; max-width: 760px; margin: 8px auto 34px; }
+.profile-avatar { width: 112px; height: 112px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.profile-avatar-fallback { width: 112px; height: 112px; font-size: 2rem; }
+.profile-bio { white-space: normal; color: var(--c-ink-soft); margin-bottom: 8px; }
+.profile-meta { color: var(--c-ink-soft); font-size: 0.88rem; margin: 0; }
+.list-page-head { margin: 8px 0 28px; }
+.list-page-head .back-link { margin-bottom: 10px; }
+.post-cover { display: block; width: 100%; max-height: 480px; object-fit: cover; margin: 0 0 28px; }
+.post-tags { margin: -6px 0 18px; }
+.draft-banner { padding: 12px 16px; margin: 0 0 20px; border: 1px solid var(--c-orange-light); border-radius: var(--radius-sm); background: #fff8eb; color: #8a4b08; font-weight: 600; }
+.status-badge { display: inline-flex; padding: 3px 9px; margin-bottom: 8px; border-radius: 999px; background: #fff1e8; color: #9a3412; font-size: 0.75rem; font-weight: 700; }
+.settings-wrap { max-width: 700px; margin: 0 auto; }
+.settings-form { display: grid; gap: 12px; }
+.settings-form label, .editor-wrap > form > label { font-size: 0.9rem; font-weight: 600; }
+.settings-form textarea, .settings-form input[type="file"], #tagInput {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--c-border); border-radius: var(--radius-sm); font: inherit;
+}
+.settings-form textarea:focus, #tagInput:focus { border-color: var(--c-teal); outline: none; }
+.settings-form .btn { justify-self: end; }
+.inline-check { display: flex; align-items: center; gap: 8px; font-weight: 400 !important; }
+.upload-preview { min-height: 0; margin: 6px 0; }
+.upload-preview img { max-width: min(100%, 360px); max-height: 220px; object-fit: contain; }
+.upload-error { margin: 4px 0; color: #9a3412; font-size: 0.85rem; }
+
+@media (max-width: 480px) {
+    .profile-head { align-items: flex-start; gap: 14px; }
+    .profile-avatar, .profile-avatar-fallback { width: 76px; height: 76px; }
+    .pagination { gap: 4px; }
+    .pagination a, .pagination .current { min-width: 32px; padding: 7px 9px; }
 }

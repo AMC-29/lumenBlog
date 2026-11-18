@@ -33,6 +33,9 @@ $bodyClass = $bodyClass ?? '';
         <nav class="site-nav" id="siteNav">
             <a href="index.php">Home</a>
             <?php if (is_logged_in()): ?>
+                <a href="<?= e(profile_url((string) current_username())) ?>">My profile</a>
+                <a href="drafts.php">My drafts</a>
+                <a href="settings.php">Settings</a>
                 <a href="editor.php" class="nav-cta">+ New post</a>
                 <span class="nav-user">
                     <span class="avatar-badge"><?= e(initials(current_username())) ?></span>

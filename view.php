@@ -4,16 +4,28 @@ require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/markdown.php';
 
-$slug = $_GET['slug'] ?? '';
-$stmt = $pdo->prepare(
-    'SELECT p.*, u.username FROM blogPost p
-     JOIN user u ON u.id = p.user_id
-     WHERE p.slug = ?'
+$slug = is_string($_GET['slug'] ?? null) ? $_GET['slug'] : '';
+$selectPost = $pdo->prepare(
+    'SELECT p.*, u.username, u.avatar AS author_avatar FROM blogPost p
+     JOIN user u ON u.id = p.user_id WHERE p.slug = ?'
 );
-$stmt->execute([$slug]);
-$post = $stmt->fetch();
+$selectPost->execute([$slug]);
+$post = $selectPost->fetch();
 
 if (!$post) {
+    $history = $pdo->prepare(
+        'SELECT p.*, u.username, u.avatar AS author_avatar FROM slug_history h
+         JOIN blogPost p ON p.id = h.post_id
+         JOIN user u ON u.id = p.user_id WHERE h.slug = ?'
+    );
+    $history->execute([$slug]);
+    $oldPost = $history->fetch();
+    $oldPostOwner = $oldPost && is_logged_in() && current_user_id() === (int) $oldPost['user_id'];
+    if ($oldPost && ($oldPost['status'] === 'published' || $oldPostOwner)) {
+        header('Location: ' . post_url($oldPost['slug']), true, 301);
+        exit;
+    }
+
     http_response_code(404);
     $pageTitle = 'Post not found — Lumen';
     require __DIR__ . '/includes/header.php';
@@ -23,25 +35,41 @@ if (!$post) {
 }
 
 $isOwner = is_logged_in() && current_user_id() === (int) $post['user_id'];
+if ($post['status'] !== 'published' && !$isOwner) {
+    http_response_code(404);
+    $pageTitle = 'Post not found — Lumen';
+    require __DIR__ . '/includes/header.php';
+    echo '<div class="empty-state"><h3>That story isn’t here.</h3><p>It may have been removed. <a href="index.php">Back to all posts</a>.</p></div>';
+    require __DIR__ . '/includes/footer.php';
+    exit;
+}
+
+$tagStmt = $pdo->prepare('SELECT t.name, t.slug FROM tag t JOIN post_tag pt ON pt.tag_id = t.id WHERE pt.post_id = ? ORDER BY t.name');
+$tagStmt->execute([(int) $post['id']]);
+$tags = $tagStmt->fetchAll();
+$coverUrl = image_url('covers', $post['cover_image']);
+$authorAvatar = image_url('avatars', $post['author_avatar']);
 $pageTitle = $post['title'] . ' — Lumen';
 require __DIR__ . '/includes/header.php';
 ?>
 
 <article class="post-view">
     <a href="index.php" class="back-link">← All posts</a>
-
+    <?php if ($post['status'] === 'draft'): ?><div class="draft-banner">Draft preview — only you can see this unpublished post.</div><?php endif; ?>
+    <?php if ($coverUrl): ?><img class="post-cover" src="<?= e($coverUrl) ?>" alt="<?= e($post['title']) ?>"><?php endif; ?>
     <header class="post-view-header">
         <h1><?= e($post['title']) ?></h1>
+        <?php if ($tags): ?>
+            <div class="post-tags"><?php foreach ($tags as $tag): ?><a class="tag-chip" href="<?= e(tag_url($tag['slug'])) ?>"><?= e($tag['name']) ?></a><?php endforeach; ?></div>
+        <?php endif; ?>
         <div class="post-view-meta">
-            <span class="avatar-badge"><?= e(initials($post['username'])) ?></span>
+            <?php if ($authorAvatar): ?><img class="avatar-image" src="<?= e($authorAvatar) ?>" alt=""><?php else: ?><span class="avatar-badge"><?= e(initials($post['username'])) ?></span><?php endif; ?>
             <div>
-                <div class="post-view-author"><?= e($post['username']) ?></div>
+                <a class="post-view-author" href="<?= e(profile_url($post['username'])) ?>"><?= e($post['username']) ?></a>
                 <div class="post-view-date">
-                    <?= format_date($post['created_at']) ?>
-                    <?php if ($post['updated_at'] !== $post['created_at']): ?>
-                        · edited <?= format_date($post['updated_at']) ?>
-                    <?php endif; ?>
-                    · <?= reading_time($post['content']) ?>
+                    <?= e(format_date($post['published_at'] ?? $post['created_at'])) ?>
+                    <?php if ($post['updated_at'] !== $post['created_at']): ?> · edited <?= e(format_date($post['updated_at'])) ?><?php endif; ?>
+                    · <?= e(reading_time($post['content'])) ?>
                 </div>
             </div>
 
@@ -55,12 +83,10 @@ require __DIR__ . '/includes/header.php';
         </div>
     </header>
 
-    <div class="post-content">
-        <?= markdown_to_html($post['content']) ?>
-    </div>
+    <div class="post-content"><?= markdown_to_html($post['content']) ?></div>
 </article>
 
-<!-- Delete confirmation modal -->
+<?php if ($isOwner): ?>
 <div class="modal-backdrop" id="deleteModal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <h3 id="modalTitle">Delete this post?</h3>
@@ -75,6 +101,7 @@ require __DIR__ . '/includes/header.php';
         </form>
     </div>
 </div>
+<?php endif; ?>
 
-<?php $extraScripts = '<script src="js/post-view.js"></script>'; ?>
+<?php $extraScripts = '<script src="js/post-view.js?v=' . filemtime(__DIR__ . '/js/post-view.js') . '"></script>'; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

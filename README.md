@@ -3,17 +3,20 @@
 HTML/CSS/JS frontend, PHP backend, MySQL database. Register, log in, write
 Markdown posts, edit or delete only your own — with a live preview editor,
 a reading-progress bar, toasts, and a mobile-responsive layout in a
-sunrise-to-teal color theme.
+sunrise-to-teal color theme. Posts support drafts, tags, cover images, stable
+URLs, author profiles, and paginated browsing.
 
 ## 1. What's in here
 
 ```
 lumen-blog/
 ├── config/db.php          # database credentials — edit this first
-├── sql/schema.sql          # run this once to create the tables
+├── sql/schema.sql          # fresh database schema
+├── sql/migrate_features.sql # one-time upgrade for an existing database
 ├── includes/
 │   ├── session.php         # login state, flash messages, CSRF tokens
-│   ├── functions.php       # slugs, excerpts, dates, escaping
+│   ├── functions.php       # shared lists, slugs, tags, URLs, escaping
+│   ├── uploads.php         # validated image processing and storage
 │   ├── markdown.php        # Markdown → HTML converter (server-side)
 │   ├── header.php          # shared <head>, nav bar
 │   └── footer.php          # shared footer, script includes
@@ -22,7 +25,11 @@ lumen-blog/
 │   ├── main.js              # nav toggle, toast notifications, card reveal
 │   ├── editor.js            # live Markdown preview, word count, autosave
 │   └── post-view.js         # delete-confirm modal, reading-progress bar
-├── index.php                # Home — lists all posts, search
+├── index.php                # Home — published posts, search, pagination
+├── tag.php                  # Published posts for a tag
+├── profile.php              # Public author profile and posts
+├── settings.php             # Edit the signed-in user's bio and avatar
+├── drafts.php               # Signed-in user's drafts
 ├── view.php                 # Single post view
 ├── register.php / login.php / logout.php
 ├── editor.php               # Create AND edit a post (same file)
@@ -34,13 +41,16 @@ Each page above is a separate file — open any one directly to see its code.
 ## 2. Local setup (test it on your own machine first)
 
 1. Install **XAMPP** (Windows/Mac) or **MAMP** (Mac), or use PHP + MySQL
-   directly if you already have them. You need PHP 8+ and MySQL/MariaDB.
+   directly if you already have them. You need PHP 8+, MySQL/MariaDB, and
+   the PHP GD extension for image uploads.
 2. Copy the `lumen-blog` folder into your server's web root
    (e.g. `htdocs/lumen-blog` for XAMPP).
 3. Start Apache and MySQL from your control panel.
 4. Open **phpMyAdmin**, create a database named `lumen_blog`, select it,
-   then click **Import**, choose `sql/schema.sql`, and run it. The schema
-   creates the two tables (`user`, `blogPost`) in the selected database.
+   then click **Import**, choose `sql/schema.sql`, and run it. This creates all
+   tables in the selected database. For an existing Lumen database, import
+   `sql/migrate_features.sql` once instead; its backfill preserves existing
+   `updated_at` values while initializing `published_at`.
 5. Open `config/db.php` and set `DB_USER` / `DB_PASS` to match your local
    MySQL (XAMPP default is usually `root` with an empty password — already
    set for you).
@@ -65,9 +75,14 @@ If you see "Database connection failed," it's almost always
   public view page (raw HTML is escaped, and link/image URLs are restricted
   to safe schemes and relative references). `js/editor.js` applies the same
   URL restrictions in the live preview while writing.
-- **Slugs** — `make_slug()` in `includes/functions.php` turns a title into
-  a URL like `view.php?slug=my-first-post`, adding `-2`, `-3`, etc. if
-  that slug is already taken.
+- **Slugs** — `make_slug()` in `includes/functions.php` creates Unicode-aware
+  slugs and protects historical links. Renamed published posts keep old slugs
+  in `slug_history`, which redirect to the current URL.
+- **Visibility** — Home, search, tag, and profile pages only list published
+  posts. Authors can preview their drafts and manage them from **My drafts**.
+- **Uploads** — covers and avatars are decoded and re-encoded with GD, then
+  stored with random names beneath `uploads/`. The web server should honor
+  `uploads/.htaccess` so scripts cannot execute in upload directories.
 
 ## 4. Step-by-step: hosting it online (InfinityFree example)
 
@@ -104,9 +119,8 @@ one, so anything that works on `localhost` will work once uploaded.
 
 ## 5. Extending it further (optional ideas)
 
-- Add pagination to `index.php` once you have many posts (`LIMIT`/`OFFSET`).
-- Add tags/categories as a third table with a join table to `blogPost`.
-- Add a "my posts" page filtered by `user_id = current_user_id()`.
+- Add comments, post moderation, or scheduled publishing.
+- Add database backups and a routine for cleaning up unused tag records.
 - Swap the hand-written Markdown parser for a library like Parsedown if
   you want full CommonMark support (tables, footnotes, etc.).
 
