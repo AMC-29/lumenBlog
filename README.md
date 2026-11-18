@@ -12,7 +12,8 @@ URLs, author profiles, and paginated browsing.
 lumen-blog/
 ├── config/db.php          # database credentials — edit this first
 ├── sql/schema.sql          # fresh database schema
-├── sql/migrate_features.sql # one-time upgrade for an existing database
+├── sql/migrate_features.sql # one-time upgrade for existing posts/tags
+├── sql/migrate_social_features.sql # one-time upgrade for comments/social features
 ├── includes/
 │   ├── session.php         # login state, flash messages, CSRF tokens
 │   ├── functions.php       # shared lists, slugs, tags, URLs, escaping
@@ -20,17 +21,22 @@ lumen-blog/
 │   ├── markdown.php        # Markdown → HTML converter (server-side)
 │   ├── header.php          # shared <head>, nav bar
 │   └── footer.php          # shared footer, script includes
+├── api/                    # JSON like, bookmark, follow, and report endpoints
 ├── css/style.css           # all styling
 ├── js/
 │   ├── main.js              # nav toggle, toast notifications, card reveal
 │   ├── editor.js            # live Markdown preview, word count, autosave
 │   └── post-view.js         # delete-confirm modal, reading-progress bar
+├── bookmarks.php            # Signed-in user's saved published posts
+├── feed.php                 # Signed-in following feed
+├── feed.xml.php             # RSS 2.0 feed (also /rss.xml)
 ├── index.php                # Home — published posts, search, pagination
 ├── tag.php                  # Published posts for a tag
 ├── profile.php              # Public author profile and posts
 ├── settings.php             # Edit the signed-in user's bio and avatar
 ├── drafts.php               # Signed-in user's drafts
 ├── view.php                 # Single post view
+├── comment-delete.php       # Comment delete handler (POST + owner check)
 ├── register.php / login.php / logout.php
 ├── editor.php               # Create AND edit a post (same file)
 └── delete.php                # Delete handler (POST only, owner only)
@@ -49,8 +55,9 @@ Each page above is a separate file — open any one directly to see its code.
 4. Open **phpMyAdmin**, create a database named `lumen_blog`, select it,
    then click **Import**, choose `sql/schema.sql`, and run it. This creates all
    tables in the selected database. For an existing Lumen database, import
-   `sql/migrate_features.sql` once instead; its backfill preserves existing
-   `updated_at` values while initializing `published_at`.
+   `sql/migrate_features.sql` and then `sql/migrate_social_features.sql` once.
+   The first migration preserves old `updated_at` values while initializing
+   `published_at`.
 5. Open `config/db.php` and set `DB_USER` / `DB_PASS` to match your local
    MySQL (XAMPP default is usually `root` with an empty password — already
    set for you).
@@ -83,6 +90,9 @@ If you see "Database connection failed," it's almost always
 - **Uploads** — covers and avatars are decoded and re-encoded with GD, then
   stored with random names beneath `uploads/`. The web server should honor
   `uploads/.htaccess` so scripts cannot execute in upload directories.
+- **Community** — comments, likes, bookmarks, author follows, and a following
+  feed are available to signed-in users. Configure `SITE_URL` in
+  `config/db.php` to the canonical absolute site URL for RSS links.
 
 ## 4. Step-by-step: hosting it online (InfinityFree example)
 

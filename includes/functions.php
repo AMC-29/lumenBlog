@@ -89,14 +89,24 @@ function requested_page($value): int
  * Fetch a paginated post list. SQL fragments are fixed by callers; all data
  * values are prepared, and LIMIT/OFFSET are emitted as integers for native PDO.
  */
-function paginated_posts(
+function fetch_post_page(
     PDO $pdo,
     string $fromSql,
     string $whereSql,
     array $params,
     int $requestedPage,
-    int $perPage = 9
+    int $perPage = 9,
+    ?int $followedBy = null,
+    string $sort = 'latest',
+    ?int $viewerId = null
 ): array {
+    if ($followedBy !== null) {
+        $whereSql .= ' AND EXISTS (SELECT 1 FROM `follow` f WHERE f.author_id = p.user_id AND f.follower_id = ?)';
+        $params[] = $followedBy;
+    }
+    $orderBy = $sort === 'popular'
+        ? 'p.view_count DESC, p.id DESC'
+        : 'COALESCE(p.published_at, p.created_at) DESC, p.id DESC';
     $count = $pdo->prepare('SELECT COUNT(DISTINCT p.id) FROM ' . $fromSql . ' WHERE ' . $whereSql);
     $count->execute($params);
     $total = (int) $count->fetchColumn();
@@ -108,13 +118,55 @@ function paginated_posts(
     $stmt = $pdo->prepare(
         'SELECT DISTINCT p.*, u.username, u.avatar AS author_avatar FROM ' . $fromSql .
         ' WHERE ' . $whereSql .
-        ' ORDER BY p.created_at DESC, p.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset
+        ' ORDER BY ' . $orderBy . ' LIMIT ' . $limit . ' OFFSET ' . $offset
     );
     $stmt->execute($params);
     $posts = $stmt->fetchAll();
     attach_post_tags($pdo, $posts);
+    attach_post_likes($pdo, $posts, $viewerId);
 
     return ['posts' => $posts, 'page' => $page, 'pages' => $pages, 'total' => $total];
+}
+
+function attach_post_likes(PDO $pdo, array &$posts, ?int $viewerId = null): void
+{
+    if (!$posts) {
+        return;
+    }
+    $ids = array_map(static fn(array $post): int => (int) $post['id'], $posts);
+    $marks = implode(',', array_fill(0, count($ids), '?'));
+    $counts = $pdo->prepare(
+        'SELECT post_id, COUNT(*) AS like_count FROM post_like WHERE post_id IN (' . $marks . ') GROUP BY post_id'
+    );
+    $counts->execute($ids);
+    $byPost = [];
+    foreach ($counts->fetchAll() as $row) {
+        $byPost[(int) $row['post_id']] = (int) $row['like_count'];
+    }
+    $liked = [];
+    $bookmarked = [];
+    if ($viewerId !== null) {
+        $active = $pdo->prepare(
+            'SELECT post_id, \'like\' AS kind FROM post_like WHERE user_id = ? AND post_id IN (' . $marks . ')
+             UNION ALL
+             SELECT post_id, \'bookmark\' AS kind FROM bookmark WHERE user_id = ? AND post_id IN (' . $marks . ')'
+        );
+        $active->execute(array_merge([$viewerId], $ids, [$viewerId], $ids));
+        foreach ($active->fetchAll() as $row) {
+            if ($row['kind'] === 'like') {
+                $liked[(int) $row['post_id']] = true;
+            } else {
+                $bookmarked[(int) $row['post_id']] = true;
+            }
+        }
+    }
+    foreach ($posts as &$post) {
+        $id = (int) $post['id'];
+        $post['like_count'] = $byPost[$id] ?? 0;
+        $post['liked'] = isset($liked[$id]);
+        $post['bookmarked'] = isset($bookmarked[$id]);
+    }
+    unset($post);
 }
 
 /** Attach tags in one query, avoiding per-card queries. */
@@ -141,13 +193,13 @@ function attach_post_tags(PDO $pdo, array &$posts): void
 }
 
 /** Render a page-number control while preserving non-page query parameters. */
-function pagination_links(int $page, int $pages, array $params = []): void
+function pagination_links(int $page, int $pages, array $params = [], string $pageKey = 'page'): void
 {
     if ($pages <= 1) {
         return;
     }
     $url = static function (int $number) use ($params): string {
-        $query = http_build_query(array_merge($params, ['page' => $number]));
+        $query = http_build_query(array_merge($params, [$pageKey => $number]));
         return '?' . $query;
     };
     $numbers = [1];
@@ -264,6 +316,22 @@ function render_post_card(array $post, array $opts = []): void
             <span class="meta-dot">•</span>
             <span><?= e(reading_time($post['content'])) ?></span>
         </div>
+        <?php if (($post['status'] ?? 'published') === 'published'): ?>
+        <div class="post-card-engagement">
+            <?php if (!$clone): ?>
+                <button type="button" class="engagement-button like-button<?= !empty($post['liked']) ? ' active' : '' ?>"
+                        data-api="like" data-post-id="<?= (int) $post['id'] ?>" aria-pressed="<?= !empty($post['liked']) ? 'true' : 'false' ?>">
+                    ♥ <span data-count><?= (int) ($post['like_count'] ?? 0) ?></span>
+                </button>
+                <button type="button" class="engagement-button bookmark-button<?= !empty($post['bookmarked']) ? ' active' : '' ?>"
+                        data-api="bookmark" data-post-id="<?= (int) $post['id'] ?>" aria-pressed="<?= !empty($post['bookmarked']) ? 'true' : 'false' ?>">
+                    <?= !empty($post['bookmarked']) ? 'Bookmarked' : 'Bookmark' ?>
+                </button>
+            <?php else: ?>
+                <span class="engagement-count">♥ <?= (int) ($post['like_count'] ?? 0) ?></span>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
     </article>
     <?php
 }

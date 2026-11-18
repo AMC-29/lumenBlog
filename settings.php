@@ -76,6 +76,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $avatarUrl = image_url('avatars', $avatar);
 $pageTitle = 'Settings — Lumen';
+$bodyClass = 'settings-page';
 require __DIR__ . '/includes/header.php';
 ?>
 <section class="settings-wrap">

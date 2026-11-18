@@ -5,6 +5,8 @@ require_once __DIR__ . '/includes/functions.php';
 
 $search = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
 $page = requested_page($_GET['page'] ?? null);
+$sortValue = is_string($_GET['sort'] ?? null) ? $_GET['sort'] : 'latest';
+$sort = in_array($sortValue, ['latest', 'popular'], true) ? $sortValue : 'latest';
 $where = 'p.status = ?';
 $params = ['published'];
 if ($search !== '') {
@@ -14,9 +16,9 @@ if ($search !== '') {
     $params[] = $like;
 }
 
-$listing = paginated_posts($pdo, 'blogPost p JOIN user u ON u.id = p.user_id', $where, $params, $page);
+$listing = fetch_post_page($pdo, 'blogPost p JOIN user u ON u.id = p.user_id', $where, $params, $page, 9, null, $sort, current_user_id());
 $posts = $listing['posts'];
-$useMarquee = ($search === '' && $listing['page'] === 1 && count($posts) >= 3);
+$useMarquee = ($search === '' && $sort === 'latest' && $listing['page'] === 1 && count($posts) >= 3);
 $popularTags = popular_tags($pdo, 8);
 
 $pageTitle = 'Lumen — a blog for bright ideas';
@@ -32,6 +34,11 @@ require __DIR__ . '/includes/header.php';
         <button type="submit">Search</button>
     </form>
 </section>
+
+<nav class="sort-toggle" aria-label="Sort posts">
+    <a href="?<?= e(http_build_query(array_filter(['q' => $search, 'sort' => 'latest']))) ?>"<?= $sort === 'latest' ? ' aria-current="page"' : '' ?>>Latest</a>
+    <a href="?<?= e(http_build_query(array_filter(['q' => $search, 'sort' => 'popular']))) ?>"<?= $sort === 'popular' ? ' aria-current="page"' : '' ?>>Popular</a>
+</nav>
 
 <?php if ($popularTags): ?>
     <section class="popular-tags home-popular-tags" aria-label="Popular tags">
@@ -72,6 +79,6 @@ require __DIR__ . '/includes/header.php';
     </section>
 <?php endif; ?>
 
-<?php pagination_links($listing['page'], $listing['pages'], $search === '' ? [] : ['q' => $search]); ?>
+<?php pagination_links($listing['page'], $listing['pages'], array_filter(['q' => $search, 'sort' => $sort === 'latest' ? null : $sort])); ?>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

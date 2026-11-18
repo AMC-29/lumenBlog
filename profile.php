@@ -16,15 +16,32 @@ if (!$profile) {
     exit;
 }
 
-$listing = paginated_posts(
+$listing = fetch_post_page(
     $pdo,
     'blogPost p JOIN user u ON u.id = p.user_id',
     'p.status = ? AND p.user_id = ?',
     ['published', (int) $profile['id']],
-    requested_page($_GET['page'] ?? null)
+    requested_page($_GET['page'] ?? null),
+    9,
+    null,
+    'latest',
+    current_user_id()
 );
 $avatarUrl = image_url('avatars', $profile['avatar']);
+$followerCountStmt = $pdo->prepare('SELECT COUNT(*) FROM `follow` WHERE author_id = ?');
+$followerCountStmt->execute([(int) $profile['id']]);
+$followerCount = (int) $followerCountStmt->fetchColumn();
+$followingCountStmt = $pdo->prepare('SELECT COUNT(*) FROM `follow` WHERE follower_id = ?');
+$followingCountStmt->execute([(int) $profile['id']]);
+$followingCount = (int) $followingCountStmt->fetchColumn();
+$isFollowing = false;
+if (is_logged_in() && current_user_id() !== (int) $profile['id']) {
+    $followStmt = $pdo->prepare('SELECT 1 FROM `follow` WHERE follower_id = ? AND author_id = ?');
+    $followStmt->execute([current_user_id(), (int) $profile['id']]);
+    $isFollowing = (bool) $followStmt->fetchColumn();
+}
 $pageTitle = $profile['username'] . ' — Lumen';
+$bodyClass = 'profile-page';
 require __DIR__ . '/includes/header.php';
 ?>
 <section class="profile-head">
@@ -36,7 +53,10 @@ require __DIR__ . '/includes/header.php';
     <div>
         <h1><?= e($profile['username']) ?></h1>
         <?php if ($profile['bio'] !== ''): ?><p class="profile-bio"><?= nl2br(e($profile['bio'])) ?></p><?php endif; ?>
-        <p class="profile-meta">Joined <?= e(format_date($profile['created_at'])) ?> · <?= (int) $listing['total'] ?> published <?= $listing['total'] === 1 ? 'post' : 'posts' ?></p>
+        <p class="profile-meta">Joined <?= e(format_date($profile['created_at'])) ?> · <?= (int) $listing['total'] ?> published <?= $listing['total'] === 1 ? 'post' : 'posts' ?> · <span id="followerCount"><?= $followerCount ?></span> followers · <?= $followingCount ?> following</p>
+        <?php if (!is_logged_in() || current_user_id() !== (int) $profile['id']): ?>
+            <button type="button" class="btn btn-ghost follow-button<?= $isFollowing ? ' active' : '' ?>" data-api="follow" data-author-id="<?= (int) $profile['id'] ?>" aria-pressed="<?= $isFollowing ? 'true' : 'false' ?>"><?= $isFollowing ? 'Unfollow' : 'Follow' ?></button>
+        <?php endif; ?>
     </div>
 </section>
 <?php if (!$listing['posts']): ?>

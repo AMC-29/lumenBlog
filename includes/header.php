@@ -14,6 +14,8 @@ $bodyClass = $bodyClass ?? '';
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css?v=<?= filemtime(__DIR__ . '/../css/style.css') ?>">
 <link rel="icon" type="image/png" href="images/logo-Photoroom.png">
+<link rel="alternate" type="application/rss+xml" title="Lumen RSS" href="<?= e(rtrim(SITE_URL, '/') . '/rss.xml') ?>">
+<meta name="csrf-token" content="<?= e(csrf_token()) ?>">
 </head>
 <body class="<?= e($bodyClass) ?>">
 
@@ -26,21 +28,15 @@ $bodyClass = $bodyClass ?? '';
             <span class="brand-name">Lumen</span>
         </a>
 
-        <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
-            <span></span><span></span><span></span>
-        </button>
-
         <nav class="site-nav" id="siteNav">
             <a href="index.php">Home</a>
             <?php if (is_logged_in()): ?>
-                <a href="<?= e(profile_url((string) current_username())) ?>">My profile</a>
-                <a href="drafts.php">My drafts</a>
-                <a href="settings.php">Settings</a>
                 <a href="editor.php" class="nav-cta">+ New post</a>
-                <span class="nav-user">
+                <button type="button" class="nav-user account-menu-trigger" id="accountMenuTrigger"
+                        aria-controls="accountDrawer" aria-expanded="false" aria-label="Open account menu">
                     <span class="avatar-badge"><?= e(initials(current_username())) ?></span>
-                    <?= e(current_username()) ?>
-                </span>
+                    <span><?= e(current_username()) ?></span>
+                </button>
                 <a href="logout.php" class="nav-link-muted nav-logout" id="logoutLink">Log out</a>
             <?php else: ?>
                 <a href="login.php">Log in</a>
@@ -49,6 +45,29 @@ $bodyClass = $bodyClass ?? '';
         </nav>
     </div>
 </header>
+
+<?php if (is_logged_in()): ?>
+<div class="account-drawer-backdrop" id="accountDrawerBackdrop" hidden></div>
+<aside class="account-drawer" id="accountDrawer" aria-labelledby="accountDrawerTitle" aria-modal="true" role="dialog" tabindex="-1" hidden>
+    <div class="account-drawer-header">
+        <div class="account-drawer-user">
+            <span class="avatar-badge"><?= e(initials(current_username())) ?></span>
+            <div>
+                <h2 id="accountDrawerTitle"><?= e(current_username()) ?></h2>
+                <span>Account menu</span>
+            </div>
+        </div>
+        <button type="button" class="account-drawer-close" id="accountDrawerClose" aria-label="Close account menu">&times;</button>
+    </div>
+    <nav class="account-drawer-nav" aria-label="Account navigation">
+        <a href="feed.php">Following feed</a>
+        <a href="bookmarks.php">Bookmarks</a>
+        <a href="<?= e(profile_url((string) current_username())) ?>">My profile</a>
+        <a href="drafts.php">My drafts</a>
+        <a href="settings.php">Settings</a>
+    </nav>
+</aside>
+<?php endif; ?>
 
 <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
@@ -59,6 +78,7 @@ unset($_SESSION['clear_editor_draft']);
 <script>
   window.__clearEditorDraft = <?= json_encode($clearEditorDraft, JSON_HEX_TAG | JSON_HEX_APOS) ?>;
   window.__flashes = <?= json_encode(get_flashes(), JSON_HEX_TAG | JSON_HEX_APOS) ?>;
+  window.__loggedIn = <?= is_logged_in() ? 'true' : 'false' ?>;
 </script>
 
 <main class="page">

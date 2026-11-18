@@ -16,12 +16,16 @@ if (!$tag) {
     exit;
 }
 
-$listing = paginated_posts(
+$listing = fetch_post_page(
     $pdo,
     'blogPost p JOIN user u ON u.id = p.user_id JOIN post_tag pt ON pt.post_id = p.id JOIN tag t ON t.id = pt.tag_id',
     'p.status = ? AND t.slug = ?',
     ['published', $tag['slug']],
-    requested_page($_GET['page'] ?? null)
+    requested_page($_GET['page'] ?? null),
+    9,
+    null,
+    'latest',
+    current_user_id()
 );
 
 $pageTitle = 'Posts tagged ' . $tag['name'] . ' — Lumen';

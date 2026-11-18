@@ -11,6 +11,7 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'lumen_blog');
 define('DB_USER', 'root');
 define('DB_PASS', '');
+define('SITE_URL', 'http://localhost/lumen-blog');
 
 try {
     $pdo = new PDO(
@@ -24,7 +25,10 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    // Never leak credentials or raw DB errors to visitors.
     http_response_code(500);
+    if (str_contains(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '', '/api/')) {
+        header('Content-Type: application/json; charset=UTF-8');
+        die('{"ok":false,"error":"A server error occurred."}');
+    }
     die('Database connection failed. Please check config/db.php and try again.');
 }
